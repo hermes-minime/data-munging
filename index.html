@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>data munging — a concept catalog</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --black: #000;
+  --white: #fff;
+  --gray-100: #f5f5f5;
+  --gray-200: #e0e0e0;
+  --gray-400: #999;
+  --gray-600: #666;
+  --red: #e63243;
+  --grid-unit: 8px;
+  --max-width: 1200px;
+  --sidebar-width: 280px;
+}
+
+html { font-size: 16px; }
+
+body {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  background: var(--white);
+  color: var(--black);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+.app {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) 1fr;
+  min-height: 100vh;
+}
+
+@media (max-width: 900px) {
+  .app { grid-template-columns: 1fr; }
+  .sidebar { display: none; }
+  .sidebar.open { display: block; position: fixed; z-index: 100; top: 0; left: 0; bottom: 0; width: var(--sidebar-width); background: var(--white); }
+}
+
+.sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  border-right: 1px solid var(--gray-200);
+  padding: calc(var(--grid-unit) * 4) 0;
+  background: var(--gray-100);
+}
+
+.sidebar-brand {
+  padding: 0 calc(var(--grid-unit) * 3);
+  margin-bottom: calc(var(--grid-unit) * 4);
+  border-bottom: 2px solid var(--black);
+  padding-bottom: calc(var(--grid-unit) * 3);
+}
+
+.sidebar-brand h1 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+
+.sidebar-brand .subtitle {
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: var(--gray-600);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-top: calc(var(--grid-unit) / 2);
+}
+
+.sidebar-nav { padding: 0 calc(var(--grid-unit) * 2); }
+.sidebar-section { margin-bottom: calc(var(--grid-unit) * 3); }
+
+.sidebar-section-title {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--gray-400);
+  padding: calc(var(--grid-unit) * 2) calc(var(--grid-unit) * 2) calc(var(--grid-unit) / 2);
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px calc(var(--grid-unit) * 2);
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--black);
+  cursor: pointer;
+  transition: background 0.15s;
+  border-left: 2px solid transparent;
+  background: none;
+  border-top: none;
+  border-right: none;
+  border-bottom: none;
+  font-family: inherit;
+  width: 100%;
+  text-align: left;
+}
+
+.nav-item:hover { background: var(--gray-200); }
+.nav-item.active { font-weight: 700; border-left-color: var(--black); background: var(--white); }
+.nav-count { margin-left: auto; font-size: 0.7rem; color: var(--gray-400); }
+
+.main { padding: calc(var(--grid-unit) * 6) calc(var(--grid-unit) * 6); max-width: var(--max-width); }
+@media (max-width: 900px) { .main { padding: calc(var(--grid-unit) * 3) calc(var(--grid-unit) * 2); } }
+
+.hero {
+  margin-bottom: calc(var(--grid-unit) * 8);
+  padding-bottom: calc(var(--grid-unit) * 4);
+  border-bottom: 2px solid var(--black);
+}
+
+.hero h2 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  margin-bottom: calc(var(--grid-unit) * 2);
+}
+
+.hero .lead {
+  font-size: 1.1rem;
+  color: var(--gray-600);
+  max-width: 640px;
+  line-height: 1.6;
+}
+
+.hero .meta {
+  margin-top: calc(var(--grid-unit) * 3);
+  font-size: 0.75rem;
+  color: var(--gray-400);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.concepts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: calc(var(--grid-unit) * 2);
+}
+
+.concept-card {
+  border: 1px solid var(--gray-200);
+  padding: calc(var(--grid-unit) * 3);
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--white);
+}
+
+.concept-card:hover {
+  border-color: var(--black);
+  box-shadow: 4px 4px 0 var(--black);
+  transform: translate(-2px, -2px);
+}
+
+.concept-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: calc(var(--grid-unit) * 2);
+}
+
+.concept-card-number {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--gray-400);
+  letter-spacing: 0.05em;
+}
+
+.concept-card-tag {
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 3px 8px;
+  border: 1px solid var(--black);
+}
+
+.concept-card-tag.foundational { background: var(--black); color: var(--white); }
+.concept-card-tag.essential { background: var(--white); }
+.concept-card-tag.important { background: var(--gray-200); }
+.concept-card-tag.advanced { background: var(--gray-400); color: var(--white); }
+
+.concept-card h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: calc(var(--grid-unit));
+}
+
+.concept-card .excerpt {
+  font-size: 0.85rem;
+  color: var(--gray-600);
+  line-height: 1.6;
+  margin-bottom: calc(var(--grid-unit) * 2);
+}
+
+.concept-card .examples {
+  font-size: 0.75rem;
+  color: var(--gray-400);
+  padding-top: calc(var(--grid-unit) * 2);
+  border-top: 1px solid var(--gray-200);
+}
+
+.concept-card .examples::before {
+  content: 'EXAMPLES';
+  display: block;
+  font-weight: 700;
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--black);
+  margin-bottom: 4px;
+}
+
+.detail-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--gray-600);
+  background: none;
+  border: none;
+  font-family: inherit;
+  margin-bottom: calc(var(--grid-unit) * 4);
+  cursor: pointer;
+}
+
+.detail-header {
+  margin-bottom: calc(var(--grid-unit) * 5);
+  padding-bottom: calc(var(--grid-unit) * 4);
+  border-bottom: 2px solid var(--black);
+}
+
+.detail-number {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--gray-400);
+  letter-spacing: 0.05em;
+  margin-bottom: calc(var(--grid-unit));
+}
+
+.detail-title {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  margin-bottom: calc(var(--grid-unit));
+}
+
+.detail-description {
+  font-size: 1.1rem;
+  color: var(--gray-600);
+  max-width: 720px;
+  line-height: 1.6;
+}
+
+.detail-section {
+  margin-bottom: calc(var(--grid-unit) * 5);
+  padding-bottom: calc(var(--grid-unit) * 4);
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.detail-section:last-child { border-bottom: none; }
+
+.detail-section h4 {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--gray-400);
+  margin-bottom: calc(var(--grid-unit) * 2);
+}
+
+.detail-section p {
+  font-size: 0.95rem;
+  line-height: 1.8;
+  max-width: 800px;
+}
+
+.detail-section ul {
+  list-style: none;
+  padding: 0;
+}
+
+.detail-section ul li {
+  font-size: 0.9rem;
+  line-height: 1.7;
+  padding: 4px 0 4px calc(var(--grid-unit) * 2);
+  position: relative;
+  max-width: 800px;
+}
+
+.detail-section ul li::before {
+  content: '—';
+  position: absolute;
+  left: 0;
+  color: var(--gray-400);
+}
+
+.pitfall-box {
+  background: var(--gray-100);
+  border-left: 3px solid var(--red);
+  padding: calc(var(--grid-unit) * 2) calc(var(--grid-unit) * 3);
+  margin-top: calc(var(--grid-unit) * 2);
+  font-size: 0.9rem;
+  max-width: 800px;
+}
+
+.related-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.related-tag {
+  font-size: 0.75rem;
+  padding: 4px 12px;
+  border: 1px solid var(--gray-200);
+  cursor: pointer;
+  background: none;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+
+.related-tag:hover {
+  border-color: var(--black);
+  background: var(--black);
+  color: var(--white);
+}
+
+.search-bar {
+  margin-bottom: calc(var(--grid-unit) * 4);
+  position: relative;
+}
+
+.search-bar input {
+  width: 100%;
+  padding: calc(var(--grid-unit) * 2) calc(var(--grid-unit) * 3);
+  font-size: 0.9rem;
+  font-family: inherit;
+  border: 1px solid var(--gray-200);
+  background: var(--white);
+  outline: none;
+}
+
+.search-bar input:focus { border-color: var(--black); }
+
+.search-bar .clear-btn {
+  position: absolute;
+  right: calc(var(--grid-unit) * 2);
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.8rem;
+  color: var(--gray-400);
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: inherit;
+  display: none;
+}
+
+.search-bar .clear-btn.visible { display: block; }
+
+.mobile-header {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 56px;
+  background: var(--white);
+  border-bottom: 1px solid var(--gray-200);
+  z-index: 50;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 calc(var(--grid-unit) * 3);
+}
+
+@media (max-width: 900px) {
+  .mobile-header { display: flex; }
+  .main { padding-top: calc(var(--grid-unit) * 8); }
+}
+
+.error-msg {
+  text-align: center;
+  padding: calc(var(--grid-unit) * 6);
+  color: var(--red);
+}
+
+.app-footer {
+  margin-top: calc(var(--grid-unit) * 8);
+  padding: calc(var(--grid-unit) * 4) 0;
+  border-top: 2px solid var(--black);
+  font-size: 0.7rem;
+  color: var(--gray-400);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+</style>
+</head>
+<body>
+
+<header class="mobile-header">
+  <button class="menu-toggle" onclick="toggleSidebar()">☰ CATALOG</button>
+  <span style="font-size:0.75rem;font-weight:700;">DATA MUNGING</span>
+</header>
+
+<div class="app">
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <h1>data munging</h1>
+      <div class="subtitle">a concept catalog</div>
+    </div>
+    <div class="sidebar-nav" id="sidebar-nav"></div>
+  </nav>
+  <main class="main" id="main"></main>
+</div>
+
+<script>
+let data = null;
+let currentView = 'home';
+let currentFilter = 'all';
+let searchQuery = '';
+
+async function loadData() {
+  try {
+    const resp = await fetch('data.json');
+    data = await resp.json();
+    render();
+  } catch (err) {
+    document.getElementById('main').innerHTML = '<div class="error-msg">Failed to load data.<br><br>' + err.message + '</div>';
+  }
+}
+
+function navigate(view, params) {
+  params = params || {};
+  currentView = view;
+  if (params.category) currentFilter = params.category;
+  if (params.concept) window._detailSlug = params.concept;
+  render();
+  window.scrollTo(0, 0);
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+}
+
+function render() {
+  if (!data) return;
+  renderSidebar();
+  if (currentView === 'home') renderHome();
+  else if (currentView === 'category') renderCategory();
+  else if (currentView === 'concept') renderDetail();
+}
+
+function renderSidebar() {
+  const nav = document.getElementById('sidebar-nav');
+  let html = '<div class="sidebar-section">' +
+    '<div class="sidebar-section-title">All Concepts (' + data.concepts.length + ')</div>' +
+    '<button class="nav-item ' + (currentView === 'home' ? 'active' : '') + '" onclick="navigate(\'home\')">' +
+    '<span>—</span> All Concepts' +
+    '<span class="nav-count">' + data.concepts.length + '</span></button></div>';
+
+  data.categories.forEach(function(cat) {
+    var count = data.concepts.filter(function(c) { return c.category === cat.slug; }).length;
+    if (count === 0) return;
+    html += '<div class="sidebar-section">' +
+      '<div class="sidebar-section-title">' + cat.icon + ' ' + cat.name + '</div>' +
+      '<button class="nav-item ' + (currentView === 'category' && currentFilter === cat.slug ? 'active' : '') + '" onclick="navigate(\'category\', {category: \'' + cat.slug + '\'})">' +
+      '<span>' + cat.icon + '</span> ' + cat.name +
+      '<span class="nav-count">' + count + '</span></button></div>';
+  });
+  nav.innerHTML = html;
+}
+
+function getFilteredConcepts() {
+  var concepts = data.concepts;
+  if (currentFilter !== 'all') {
+    concepts = concepts.filter(function(c) { return c.category === currentFilter; });
+  }
+  if (searchQuery) {
+    var q = searchQuery.toLowerCase();
+    concepts = concepts.filter(function(c) {
+      return c.title.toLowerCase().indexOf(q) !== -1 ||
+             c.description.toLowerCase().indexOf(q) !== -1 ||
+             c.details.toLowerCase().indexOf(q) !== -1;
+    });
+  }
+  return concepts;
+}
+
+function renderHome() {
+  var concepts = getFilteredConcepts();
+  var main = document.getElementById('main');
+  var html = '<div class="hero">' +
+    '<h2>Everything you need<br>to know about<br>data munging.</h2>' +
+    '<p class="lead">A comprehensive, language-agnostic catalog of the concepts, patterns, and pitfalls of data cleaning and transformation. No code. Just the ideas.</p>' +
+    '<div class="meta">' + data.concepts.length + ' concepts · ' + data.categories.length + ' categories · zero dependencies</div>' +
+    '</div>' +
+    '<div class="search-bar">' +
+    '<input type="text" id="search-input" placeholder="Search concepts…" value="' + searchQuery + '" oninput="handleSearch(this.value)">' +
+    '<button class="clear-btn ' + (searchQuery ? 'visible' : '') + '" onclick="clearSearch()">✕</button>' +
+    '</div>' +
+    '<div class="concepts-grid">' +
+    concepts.map(function(c, i) { return renderCard(c, i + 1); }).join('') +
+    '</div>';
+  main.innerHTML = html;
+}
+
+function renderCard(c) {
+  return '<div class="concept-card" onclick="navigate(\'concept\', {concept: \'' + c.slug + '\'})">' +
+    '<div class="concept-card-header">' +
+    '<span class="concept-card-number">' + String(data.concepts.indexOf(c) + 1).padStart(2, '0') + ' / ' + String(data.concepts.length).padStart(2, '0') + '</span>' +
+    '<span class="concept-card-tag ' + c.difficulty + '">' + c.difficulty + '</span></div>' +
+    '<h3>' + c.title + '</h3>' +
+    '<p class="excerpt">' + c.description + '</p>' +
+    (c.examples ? '<div class="examples">' + c.examples.split('. ').slice(0, 2).join('. ') + '</div>' : '') +
+    '</div>';
+}
+
+function renderCategory() {
+  var cat = null;
+  for (var i = 0; i < data.categories.length; i++) {
+    if (data.categories[i].slug === currentFilter) { cat = data.categories[i]; break; }
+  }
+  if (!cat) return renderHome();
+
+  var concepts = data.concepts.filter(function(c) { return c.category === currentFilter; });
+  var main = document.getElementById('main');
+  var html = '<button class="detail-back" onclick="navigate(\'home\')">← All concepts</button>' +
+    '<div class="hero">' +
+    '<h2>' + cat.icon + ' ' + cat.name + '</h2>' +
+    '<p class="lead">' + cat.description + '</p>' +
+    '<div class="meta">' + concepts.length + ' concept' + (concepts.length !== 1 ? 's' : '') + '</div>' +
+    '</div>' +
+    '<div class="concepts-grid">' +
+    concepts.map(function(c) { return renderCard(c); }).join('') +
+    '</div>';
+  main.innerHTML = html;
+}
+
+function renderDetail() {
+  var slug = window._detailSlug;
+  if (!slug) return renderHome();
+  var c = null;
+  for (var i = 0; i < data.concepts.length; i++) {
+    if (data.concepts[i].slug === slug) { c = data.concepts[i]; break; }
+  }
+  if (!c) return renderHome();
+
+  var main = document.getElementById('main');
+  var num = data.concepts.indexOf(c) + 1;
+  var total = data.concepts.length;
+
+  var relatedSlugs = c.related ? c.related.split(', ') : [];
+  var relatedConcepts = [];
+  for (var r = 0; r < relatedSlugs.length; r++) {
+    var name = relatedSlugs[r].trim();
+    for (var j = 0; j < data.concepts.length; j++) {
+      if (data.concepts[j].title === name) { relatedConcepts.push(data.concepts[j]); break; }
+    }
+  }
+
+  var catName = '';
+  for (var k = 0; k < data.categories.length; k++) {
+    if (data.categories[k].slug === c.category) { catName = data.categories[k].name; break; }
+  }
+
+  var html = '<button class="detail-back" onclick="navigate(\'home\')">← All concepts</button>' +
+    '<div class="detail-header">' +
+    '<div class="detail-number">' + String(num).padStart(2, '0') + ' / ' + String(total).padStart(2, '0') + ' · ' + c.difficulty + ' · ' + catName + '</div>' +
+    '<h2 class="detail-title">' + c.title + '</h2>' +
+    '<p class="detail-description">' + c.description + '</p>' +
+    '</div>' +
+    '<div class="detail-section"><h4>How it works</h4><p>' + c.details + '</p></div>' +
+    (c.examples ? '<div class="detail-section"><h4>Examples</h4><ul>' +
+    c.examples.split('. ').filter(function(e) { return e.trim(); }).map(function(e) { return '<li>' + e.trim() + '.</li>'; }).join('') +
+    '</ul></div>' : '') +
+    (c.pitfalls ? '<div class="detail-section"><h4>Common pitfalls</h4><div class="pitfall-box">' + c.pitfalls + '</div></div>' : '') +
+    (relatedConcepts.length ? '<div class="detail-section"><h4>Related concepts</h4><div class="related-list">' +
+    relatedConcepts.map(function(rc) { return '<button class="related-tag" onclick="navigate(\'concept\', {concept: \'' + rc.slug + '\'})">' + rc.title + '</button>'; }).join('') +
+    '</div></div>' : '') +
+    '<div class="app-footer">data munging · a concept catalog · ' + data.concepts.length + ' concepts</div>';
+
+  main.innerHTML = html;
+}
+
+function handleSearch(val) {
+  searchQuery = val;
+  if (currentView !== 'home') navigate('home');
+  else render();
+}
+
+function clearSearch() {
+  searchQuery = '';
+  document.getElementById('search-input').value = '';
+  var btn = document.querySelector('.clear-btn');
+  if (btn) btn.classList.remove('visible');
+  render();
+}
+
+document.addEventListener('DOMContentLoaded', loadData);
+</script>
+</body>
+</html>
